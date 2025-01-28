@@ -18,21 +18,31 @@ outLog() {
 	echo "$1"
 } >&2
 
+
+
 getLatestRevision() {
-	outLog "Getting latest tagged revision ...";
-	if [ "$(git tag -l *latest* | wc -l)" -eq "0" ]; then
-                local INITIAL_COMMIT="$(git rev-list --full-history HEAD | tail -n 1)";
+    local branch="$1"
+    outLog "Getting latest tagged revision ..."
 
-		outLog ":latest doesn't exist. Setting :latest to initial commit.";
-		outLog "Initial Commit: $INITIAL_COMMIT";
+    if [ -z "$branch" ]; then
+        outLog "Branch name is required."
+        echo "1.0.0"
+        return 1
+    fi
 
-                git tag latest $INITIAL_COMMIT;
+    # Get the latest version tag starting with 'v' from the specified branch
+    latest_tag=$(git tag --merged "$branch" | grep '^v' | while read tag; do
+        echo "$(git log -1 --format='%ai %D' "$tag" | head -n 1) $tag"
+    done | sort | tail -n 1 | awk '{print $NF}' | tr -d 'v')  
 
-		echo "NA";
-		return 0
-        fi
 
-	echo "$(git tag --contains latest | grep v | tr -d 'v')"
+    # Check if a valid tag was found, else return 1.0.0
+    if [ -z "$latest_tag" ]; then
+        echo "1.0.0"
+        return 1
+    fi
+
+    echo "$latest_tag"
 }
 
 getRevisionType() {
@@ -198,14 +208,12 @@ tagRelease() {
 	outLog "Annotated Message: $MESSAGE";
 
 	git tag -a "v$REVISION" -m "$MESSAGE";
-	git tag -f latest
 }
 
 pushToOrigin() {
 	outLog "Pushing changes to origin ...";
 
 	git push 2> /dev/null;
-	git push origin :latest 2> /dev/null;
 	git push --tags 2> /dev/null;
 
 	outLog "Push successful.";
@@ -218,19 +226,10 @@ outLog "Dev Branch: $DEV_BRANCH";
 BRANCH="$(git branch --show-current)";
 outLog "Current branch: $BRANCH";
 
-REVISION="$(getLatestRevision)";
+REVISION="$(getLatestRevision "$BRANCH")";
 outLog "Latest Revision: $REVISION";
 
-if [ -z "$REVISION" ]; then
-	outLog "Tag version failed! Version must exist at :latest";
-	exit 32;
-fi
-
-if [ "$REVISION" != "NA" ]; then
-	REVISION_TYPE="$(getRevisionType)";
-else
-	REVISION_TYPE="major";
-fi
+REVISION_TYPE="$(getRevisionType)";
 outLog "Revision Type: $REVISION_TYPE";
 
 if [ "$BRANCH" = "$DEV_BRANCH" ]; then
