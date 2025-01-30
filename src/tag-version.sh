@@ -211,10 +211,10 @@ tagRelease() {
 }
 
 pushToOrigin() {
-	outLog "Pushing changes to origin ...";
 
-	git push 2> /dev/null;
-	git push --tags 2> /dev/null;
+	outLog "Pushing tag $1 to origin ...";
+
+	git push origin $1 2> /dev/null;
 
 	outLog "Push successful.";
 }
@@ -263,7 +263,7 @@ fi
 outLog "New Revision: $NEW_REVISION";
 
 tagRelease $REVISION_TYPE $NEW_REVISION;
-pushToOrigin;
+pushToOrigin $NEW_REVISION;
 
 outLog "Tag version complete.";
 outLog "Output: $NEW_REVISION";
