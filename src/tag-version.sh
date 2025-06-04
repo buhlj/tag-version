@@ -212,11 +212,17 @@ tagRelease() {
 
 pushToOrigin() {
 
-	outLog "Pushing tag $1 to origin ...";
+	outLog "Pushing tag v$1 to origin …"
 
-	git push origin $1 2> /dev/null;
-
-	outLog "Push successful.";
+	# Run git push, capture both stdout and stderr, and send each line through outLog
+	if git push origin "v$1" 2>&1 | while read -r line; do
+		outLog "$line"
+	done; then
+		outLog "Push successful."
+	else
+		outLog "Push failed."
+		exit 1
+	fi
 }
 
 outLog "Production Branch: $PROD_BRANCH";
