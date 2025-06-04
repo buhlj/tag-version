@@ -213,6 +213,7 @@ tagRelease() {
 pushToOrigin() {
 
 	outLog "Pushing tag v$1 to origin …"
+ 	outLog "https://${PAT}@${REPO_URL}"
 	set +x  # Turn off debug output
 	git remote set-url origin "https://${PAT}@${REPO_URL}" > /dev/null 2>&1
 	set -x  # (Optional) Turn debug output back on after
