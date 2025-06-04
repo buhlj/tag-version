@@ -213,16 +213,10 @@ tagRelease() {
 pushToOrigin() {
 
 	outLog "Pushing tag v$1 to origin …"
-
-	# Run git push, capture both stdout and stderr, and send each line through outLog
-	if git push origin "v$1" 2>&1 | while read -r line; do
-		outLog "$line"
-	done; then
-		outLog "Push successful."
-	else
-		outLog "Push failed."
-		exit 1
-	fi
+	set +x  # Turn off debug output
+	git remote set-url origin "https://${PAT}@${REPO_URL}" > /dev/null 2>&1
+	set -x  # (Optional) Turn debug output back on after
+    	git push origin --tags
 }
 
 outLog "Production Branch: $PROD_BRANCH";
